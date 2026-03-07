@@ -115,7 +115,7 @@ async function createDiscordClientForBot(
       // Fetch recent conversation with caching
       const conversationArray = await ephemeralFetchConversation(
         message.channel as TextChannel | DMChannel,
-        30, // last 30 messages
+        4, // last 30 messages
         5000 // 5 second cache
       );
 
