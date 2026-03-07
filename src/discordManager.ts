@@ -162,7 +162,7 @@ async function createDiscordClientForBot(
       // Fetch recent conversation with caching
       const conversationArray = await ephemeralFetchConversation(
         message.channel as TextChannel | DMChannel,
-        6,
+        4,
         5000
       );
 
@@ -243,7 +243,7 @@ async function handleDirectMessage(
       // Fetch recent conversation
       const conversationArray = await ephemeralFetchConversation(
         message.channel,
-        6,
+        4,
         5000
       );
 
