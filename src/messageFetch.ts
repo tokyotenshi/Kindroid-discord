@@ -112,31 +112,25 @@ async function fetchConversationFromDiscord(
       throw new Error("Bot client ID not found");
     }
 
-    // Pre-fetch display names for all users except our bot
-    const uniqueUsers = new Set(
-      sorted
-        .filter((msg) => msg.author.id !== ourBotId)
-        .map((msg) => msg.author.id)
-    );
+    // Keep only HUMAN messages
+    const humanMessages = sorted.filter((msg) => msg.author.id !== ourBotId);
+
+    // Pre-fetch display names for all humans
+    const uniqueUsers = new Set(humanMessages.map((msg) => msg.author.id));
     const displayNamePromises = Array.from(uniqueUsers).map(async (userId) => {
-      // Find first message from this user to use as reference
-      const userMsg = sorted.find((m) => m.author.id === userId);
+      const userMsg = humanMessages.find((m) => m.author.id === userId);
       if (userMsg) {
         await getUserDisplayName(userMsg);
       }
     });
 
-    // Wait for all display names to be cached
     await Promise.all(displayNamePromises);
 
-    // Now format messages using cached display names or {{ai}} for our bot's messages
+    // Format only human messages
     const messages = await Promise.all(
-      sorted.map(
+      humanMessages.map(
         async (msg: Message): Promise<ConversationMessage> => ({
-          username:
-            msg.author.id === ourBotId
-              ? "{{ai}}"
-              : await getUserDisplayName(msg),
+          username: await getUserDisplayName(msg),
           text: msg.content,
           timestamp: msg.createdAt.toISOString(),
         })
@@ -181,7 +175,6 @@ async function ephemeralFetchConversation(
 
   // Clean old cache entries periodically
   if (channelCache.size > 1000) {
-    // Prevent unbounded growth
     const oldestAllowed = now - cacheDurationMs;
     for (const [key, value] of channelCache.entries()) {
       if (value.lastFetchTime < oldestAllowed) {
