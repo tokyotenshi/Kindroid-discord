@@ -190,7 +190,7 @@ async function handleDirectMessage(
       // Fetch recent conversation
       const conversationArray = await ephemeralFetchConversation(
         message.channel,
-        30,
+        4,
         5000
       );
 
