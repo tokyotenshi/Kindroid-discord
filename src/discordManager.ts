@@ -144,11 +144,14 @@ async function createDiscordClientForBot(
     const botUser = client.user;
     if (!botUser) return;
 
-    // Only respond if directly mentioned
+    // Trigger 1: direct mention
     const isMentioned = message.mentions.users.has(botUser.id);
 
-    // Ignore if the bot is not mentioned
-    if (!isMentioned) return;
+    // Trigger 2: whole word "bibi" plus stretched versions like bibiiii
+    const hasBiBiWord = /\bbibi+\b/i.test(message.content);
+
+    // Ignore if neither trigger is present
+    if (!isMentioned && !hasBiBiWord) return;
 
     try {
       // Show typing indicator
