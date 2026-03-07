@@ -19,10 +19,11 @@ const activeBots = new Map<string, Client>();
 // Track DM conversation counts with proper typing
 const dmConversationCounts = new Map<string, DMConversationCount>();
 
-const DISCORD_MESSAGE_LIMIT = 2000;
-
 // Helper function to split long messages into safe chunks
-function splitMessageIntoChunks(text: string, maxLength: number = 1900): string[] {
+function splitMessageIntoChunks(
+  text: string,
+  maxLength: number = 1900
+): string[] {
   if (!text || text.length <= maxLength) {
     return [text];
   }
@@ -60,14 +61,8 @@ function splitMessageIntoChunks(text: string, maxLength: number = 1900): string[
 async function replyInChunks(message: Message, text: string): Promise<void> {
   const chunks = splitMessageIntoChunks(text);
 
-  for (let i = 0; i < chunks.length; i++) {
-    const chunk = chunks[i];
-
-    if (i === 0) {
-      await message.reply(chunk);
-    } else {
-      await message.channel.send(chunk);
-    }
+  for (const chunk of chunks) {
+    await message.reply(chunk);
   }
 }
 
