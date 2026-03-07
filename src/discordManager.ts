@@ -19,6 +19,58 @@ const activeBots = new Map<string, Client>();
 // Track DM conversation counts with proper typing
 const dmConversationCounts = new Map<string, DMConversationCount>();
 
+const DISCORD_MESSAGE_LIMIT = 2000;
+
+// Helper function to split long messages into safe chunks
+function splitMessageIntoChunks(text: string, maxLength: number = 1900): string[] {
+  if (!text || text.length <= maxLength) {
+    return [text];
+  }
+
+  const chunks: string[] = [];
+  let remaining = text;
+
+  while (remaining.length > maxLength) {
+    let splitAt = remaining.lastIndexOf("\n", maxLength);
+
+    if (splitAt < maxLength * 0.5) {
+      splitAt = remaining.lastIndexOf(" ", maxLength);
+    }
+
+    if (splitAt < maxLength * 0.5) {
+      splitAt = maxLength;
+    }
+
+    const chunk = remaining.slice(0, splitAt).trim();
+    if (chunk.length > 0) {
+      chunks.push(chunk);
+    }
+
+    remaining = remaining.slice(splitAt).trim();
+  }
+
+  if (remaining.length > 0) {
+    chunks.push(remaining);
+  }
+
+  return chunks;
+}
+
+// Helper function to send reply in chunks if needed
+async function replyInChunks(message: Message, text: string): Promise<void> {
+  const chunks = splitMessageIntoChunks(text);
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+
+    if (i === 0) {
+      await message.reply(chunk);
+    } else {
+      await message.channel.send(chunk);
+    }
+  }
+}
+
 // Helper function to check if the bot can respond to a channel before responding
 async function canRespondToChannel(
   channel: Message["channel"]
@@ -115,8 +167,8 @@ async function createDiscordClientForBot(
       // Fetch recent conversation with caching
       const conversationArray = await ephemeralFetchConversation(
         message.channel as TextChannel | DMChannel,
-        4, // last 30 messages
-        5000 // 5 second cache
+        4,
+        5000
       );
 
       // Call Kindroid AI with the conversation context
@@ -131,8 +183,14 @@ async function createDiscordClientForBot(
         return;
       }
 
-      // Reply directly to the triggering message
-      await message.reply(aiResult.reply);
+      const replyText = aiResult.reply?.trim();
+
+      if (!replyText) {
+        return;
+      }
+
+      // Reply in chunks if needed
+      await replyInChunks(message, replyText);
     } catch (error) {
       console.error(`[Bot ${botConfig.id}] Error:`, error);
       await message.reply(
@@ -206,8 +264,14 @@ async function handleDirectMessage(
         return;
       }
 
-      // Send the AI's reply
-      await message.reply(aiResult.reply);
+      const replyText = aiResult.reply?.trim();
+
+      if (!replyText) {
+        return;
+      }
+
+      // Send the AI's reply in chunks if needed
+      await replyInChunks(message, replyText);
     }
   } catch (error) {
     console.error(`[Bot ${botConfig.id}] DM Error:`, error);
