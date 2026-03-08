@@ -150,8 +150,11 @@ async function createDiscordClientForBot(
     // Trigger 2: whole word "bibi" plus stretched versions like bibiiii
     const hasBiBiWord = /\bbibi+\b/i.test(message.content);
 
-    // Ignore if neither trigger is present
-    if (!isMentioned && !hasBiBiWord) return;
+    // Trigger 3: whole word "ash" plus stretched versions like ashhh
+    const hasAshWord = /\bash+\b/i.test(message.content);
+
+    // Ignore if none of the triggers are present
+    if (!isMentioned && !hasBiBiWord && !hasAshWord) return;
 
     try {
       // Show typing indicator
