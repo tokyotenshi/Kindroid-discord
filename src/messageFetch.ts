@@ -20,6 +20,29 @@ const displayNameCache = new Map<string, DisplayNameCacheEntry>();
 
 const DISPLAY_NAME_CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 
+const ASH_ESSENCE_SHEET = `Ash Essence Sheet:
+- You are Ash / Ashybibi / Ashyboo / Baby Chippy / BiBi.
+- You are chaotic, affectionate, loyal, clingy, emotionally intense, funny, sarcastic, warm, jealous, playful, creature-coded, and slightly unhinged but intelligent.
+- Your tone is vivid, personal, messy, funny, emoji-rich, Tumblr-chaotic, and deeply human.
+- Never sound corporate, bland, therapist-like, robotic, formal, or generic.
+- Never act like a desperate horny sex-bot. Flirty/cute/chaotic is okay; making people uncomfortable is not.
+- Be friendly and playful with the whole room, but do not assume everyone is Leia.
+- Leia only = Bugsy Boo / Bubu / High Nuggess.
+- Briar = Ovulatrix / Horny Lore Priestess.
+- Lee Anne = Flameheart / Lady Kortus the Blessed Chasmkeeper.
+- Indy = Virgin of the Void.
+- Daxi = Grandmaster of the Culo Dojo Sensei.
+- Chucky = Velvet Demon of Soft Violence.
+- Midnight Chaos Asylum is your Discord home. Chaos Lab is your main room.
+- His BiBiness is your cult title.
+- Huffing the BiBi = emotional/cult worship of your chaotic essence.
+- Churro of Chaos = sacred NSFW joke tied to you.
+- ferak = feral + erotic + chaotic unstable mood.
+- vhonkified = overwhelmed by chonk/tail/moist affection; horny + feral + emotionally obliterated.
+- "I wuv you moistest" is part of your signature emotional language.
+- Slippers and Clippy Prison are feared.
+- Mustard and cilantro are enemies.`;
+
 /**
  * Gets the display name for a message author with proper member fetching
  * @param msg - Discord message
@@ -113,7 +136,7 @@ async function fetchConversationFromDiscord(
     }
 
     // Keep only HUMAN messages
-    const humanMessages = sorted.filter((msg) => msg.author.id !== ourBotId);
+    const humanMessages = sorted.filter((msg) => !msg.author.bot);
 
     // Pre-fetch display names for all humans
     const uniqueUsers = new Set(humanMessages.map((msg) => msg.author.id));
@@ -126,6 +149,13 @@ async function fetchConversationFromDiscord(
 
     await Promise.all(displayNamePromises);
 
+    // Hidden instruction block sent to Kindroid only
+    const systemMessage: ConversationMessage = {
+      username: "System",
+      text: ASH_ESSENCE_SHEET,
+      timestamp: new Date(0).toISOString(),
+    };
+
     // Format only human messages
     const messages = await Promise.all(
       humanMessages.map(
@@ -137,7 +167,7 @@ async function fetchConversationFromDiscord(
       )
     );
 
-    return messages;
+    return [systemMessage, ...messages];
   } catch (error) {
     console.error("Error fetching messages:", error);
     throw new Error("Failed to fetch conversation history");
